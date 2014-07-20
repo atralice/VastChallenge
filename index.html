@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Vast Challenge</title>
+<style>
+body {text-align: center; padding-top: 10px;}
+
+#drop { border: 10px solid black; text-align: center; line-height: 100px; width: 200px; margin: auto; font-size: 40px; display: inline-block;}
+path {
+  fill: none;
+  stroke: #111;
+}
+#output svg{
+	border:5px solid #ccc;
+}
+</style>
+		
+</head>
+<body>
+
+<h1>Abila</h1>
+
+
+<div id="output"></div>
+
+<script src="js/d3.min.js"></script>
+<script>
+	var svg;
+	var width = 960, height = 500;
+	//Translate y Escala inicial (calculada a manopla)
+	var t = [-1339682.5411316217,-697706.2604257526];
+	var s = 2792;
+	//Creo la proyeccion mercator con centro en el centroide de shape de Abila con d3.geo.centroid(json)
+	var projection = d3.geo.mercator().center([24.86592056267166, 36.06449582404174]);
+	var path = d3.geo.path().projection(projection);
+	var zoom = d3.behavior.zoom().translate(t).scale(s);
+
+	function redraw() {
+		var s = d3.event.scale;
+		var t = d3.event.translate;
+
+		svg.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ")scale(" + s + ")");
+		svgPoint.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ")scale(" + s + ")");
+	}
+
+	d3.json("csv/abila.geojson", function(json){
+	
+		svg = d3.select("#output").append("svg")
+		    .attr("width", width)
+		    .attr("height", height)
+		    .call(zoom.on("zoom", redraw))
+		    .append("g")
+		    .attr("transform","translate("+t+")scale("+s+")")
+		    .attr("stroke-width", 1/s);
+
+		svg.append("path")
+    		.datum({type: "FeatureCollection", features: json.features})
+    		.attr("d", path);
+		
+		d3.json("csv/35C.json", function(data) {
+		
+		svgPoint = d3.select("#output").select("svg").append("g")
+		    .attr("transform","translate("+t+")scale("+s+")")
+		    .attr("stroke-width", 1/s);
+
+
+		data.forEach(function(d) {
+			coordinates = projection([d.Long, d.Lat]);
+			
+	  		var circle = svgPoint.append("circle")
+	  			.call(zoom.on("zoom", redraw))
+	  			.attr("cx",coordinates[0])
+	  			.attr("cy",coordinates[1])
+	 			.attr("r", 1/s)
+	 			.attr("fill", "blue")
+		});
+	});
+	});
+
+
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Vast Challenge</title>
+	<style>
+	body {text-align: center; padding-top: 10px;}
+
+	#drop { border: 10px solid black; text-align: center; line-height: 100px; width: 200px; margin: auto; font-size: 40px; display: inline-block;}
+	path {
+		fill: none;
+		stroke: #111;
+	}
+	#output svg{
+		border:5px solid #ccc;
+	}
+
+	.button{
+		position:center;
+		background-color: #ccc;
+		padding:10px 10px 10px 10px;}
+		</style>
+		
+	</head>
+	<body>
+
+		<h1>Abila</h1>
+
+
+		<div id="output"></div>
+		<div id = "button1" class = "button" onclick="movePoint();">Next</div>
+
+		<script src="js/d3.min.js"></script>
+		<script>
+		var counter = 0;
+		var datos;
+		var svg;
+		var width = 960, height = 500;
+	//Translate y Escala inicial (calculada a manopla)
+	var t = [-1339682.5411316217,-697706.2604257526];
+	var s = 2792;
+	//Creo la proyeccion mercator con centro en el centroide de shape de Abila con d3.geo.centroid(json)
+	var projection = d3.geo.mercator().center([24.86592056267166, 36.06449582404174]);
+	var path = d3.geo.path().projection(projection);
+	var zoom = d3.behavior.zoom().translate(t).scale(s);
+
+	svg = d3.select("#output").append("svg")
+		.attr("width", width)
+		.attr("height", height)
+		.call(zoom.on("zoom", redraw))
+		.append("g")
+		.attr("name","Abila")
+		.attr("transform","translate("+t+")scale("+s+")")
+		.style("stroke-width", 1/s);
+
+	svgPoint = d3.select("#output").select("svg").append("g")
+		.attr("name", "Punto")
+		.attr("transform","translate("+t+")scale("+s+")")
+		.attr("stroke-width", 1/s);
+
+	punto = svgPoint.append("circle");
+	texto = svgPoint.append("text").text("ID: 35");
+
+	function redraw() {
+		var s = d3.event.scale;
+		var t = d3.event.translate;
+
+		svg.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ")scale(" + s + ")");
+		svgPoint.attr("transform", "translate(" + t + ")scale(" + s + ")");
+	}
+
+	d3.json("csv/abila.geojson", function(json){
+
+		svg.append("path")
+		.datum({type: "FeatureCollection", features: json.features})
+		.attr("d", path);
+	});
+
+	d3.json("csv/35C.json", function(data) {
+
+		datos = data;
+
+		coordinates = projection([datos[counter].Long, datos[counter].Lat]);
+
+		var circle = punto
+			.attr("cx",coordinates[0])
+			.attr("cy",coordinates[1])
+			.attr("r", 5/s)
+			.attr("fill", "lightblue")
+			.attr("stroke", "black");
+
+		var id = 	texto
+			.attr("dx",coordinates[0])
+			.attr("dy",coordinates[1])
+			.text("ID: 35")
+			.attr("fill", "darkorchid")
+			.attr("stroke", "black")
+			.attr("stroke-width", 0.5/s)
+			.attr("font-family", "Verdana")
+			.attr("font-size", 20/s);
+	
+});
+	
+	function movePoint() {
+		for (var j = 0; j < datos.length; j = j + 25) {
+			for (var i = 0; i < 25; i++) {
+
+			counter++;
+			//console.log(counter);
+
+			coordinates = projection([datos[counter].Long, datos[counter].Lat]);
+			
+			punto
+			.transition()
+			.duration(120).delay(j * 10)
+			.attr("cx",coordinates[0])
+			.attr("cy",coordinates[1]); 
+
+			texto
+			.transition()
+			.duration(120).delay(j * 10)
+			.attr("dx",coordinates[0])
+			.attr("dy",coordinates[1]); 
+		}
+	}
+};
+
+
+</script>
+</body>
+</html>
+
